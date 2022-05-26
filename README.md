@@ -1,2 +1,3 @@
 # aws-shortcuts
-A tool to simply some AWS CLI daily jobs
+
+A Python script using Boto3 to make searching resources easier on AWS
