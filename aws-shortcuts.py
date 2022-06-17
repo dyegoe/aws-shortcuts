@@ -4,6 +4,7 @@ import argparse
 import boto3
 from tabulate import tabulate
 from sys import exit as sysexit
+from collections import OrderedDict
 
 
 class AwsShortcuts:
@@ -132,25 +133,23 @@ class AwsShortcuts:
         instances = []
         for reservation in response["Reservations"]:
             for instance in reservation["Instances"]:
-                instanceTmp = {}
                 for tag in instance["Tags"]:
                     if tag["Key"] == "Name":
-                        instanceTmp["Name"] = tag["Value"]
-                instanceTmp["InstanceId"] = instance["InstanceId"]
-                instanceTmp["InstanceType"] = instance["InstanceType"]
-                instanceTmp["InstanceState"] = instance["State"]["Name"]
-                instanceTmp["AvailabilityZone"] = instance["Placement"][
-                    "AvailabilityZone"
-                ]
-                instanceTmp["PrivateIpAddress"] = instance.get(
-                    "PrivateIpAddress", None)
-                instanceTmp["PublicIpAddress"] = instance.get(
-                    "PublicIpAddress", None)
-                instances.append(instanceTmp)
+                        instance_name = tag["Value"]
+                instances.append(OrderedDict([
+                    ("InstanceState", instance["State"]["Name"]),
+                    ("InstanceName", instance_name),
+                    ("InstanceId", instance["InstanceId"]),
+                    ("InstanceType", instance["InstanceType"]),
+                    ("AvailabilityZone",
+                     instance["Placement"]["AvailabilityZone"]),
+                    ("PrivateIpAddress", instance.get("PrivateIpAddress", None)),
+                    ("PublicIpAddress", instance.get("PublicIpAddress", None)),
+                ]))
         print(
             tabulate(
                 instances,
-                headers='keys',
+                headers="keys",
                 tablefmt=self.tablefmt,
             )
         )
@@ -179,21 +178,19 @@ class AwsShortcuts:
             Filters=filters, DryRun=False)
         enis = []
         for eni in response["NetworkInterfaces"]:
-            # pprint(eni)
-            eniTmp = {
-                "PrivateIp": eni["PrivateIpAddress"],
-                "PublicIp": eni["Association"]["PublicIp"],
-                "NetworkInterfaceId": eni["NetworkInterfaceId"],
-                "InterfaceType": eni["InterfaceType"],
-                "InstanceId": eni.get("Attachment", None).get("InstanceId", None),
-                "AvailabilityZone": eni["AvailabilityZone"],
-                "Status": eni["Status"],
-            }
-            enis.append(eniTmp)
+            enis.append(OrderedDict([
+                ("PrivateIp", eni["PrivateIpAddress"]),
+                ("PublicIp", eni["Association"]["PublicIp"]),
+                ("NetworkInterfaceId", eni["NetworkInterfaceId"]),
+                ("InterfaceType", eni["InterfaceType"]),
+                ("InstanceId", eni.get("Attachment", None).get("InstanceId", None)),
+                ("AvailabilityZone", eni["AvailabilityZone"]),
+                ("Status", eni["Status"]),
+            ]))
         print(
             tabulate(
                 enis,
-                headers='keys',
+                headers="keys",
                 tablefmt=self.tablefmt,
             )
         )
@@ -227,19 +224,18 @@ class AwsShortcuts:
                 and elb["DNSName"] not in self.args.dnsNames
             ):
                 continue
-            elbTmp = {
-                "LoadBalancerArn": elb["LoadBalancerArn"],
-                "LoadBalancerName": elb["LoadBalancerName"],
-                "DNSName": elb["DNSName"],
-                "Type": elb["Type"],
-                "Scheme": elb["Scheme"],
-            }
-            elbs.append(elbTmp)
+            elbs.append(OrderedDict([
+                ("LoadBalancerName", elb["LoadBalancerName"]),
+                ("DNSName", elb["DNSName"]),
+                ("Type", elb["Type"]),
+                ("Scheme", elb["Scheme"]),
+                ("LoadBalancerArn", elb["LoadBalancerArn"]),
+            ]))
 
         print(
             tabulate(
                 elbs,
-                headers='keys',
+                headers="keys",
                 tablefmt=self.tablefmt,
             )
         )
