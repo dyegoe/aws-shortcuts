@@ -138,6 +138,7 @@ class AwsShortcuts:
                         instanceTmp["Name"] = tag["Value"]
                 instanceTmp["InstanceId"] = instance["InstanceId"]
                 instanceTmp["InstanceType"] = instance["InstanceType"]
+                instanceTmp["InstanceType"] = instance["State"]["Name"]
                 instanceTmp["AvailabilityZone"] = instance["Placement"][
                     "AvailabilityZone"
                 ]
@@ -154,6 +155,7 @@ class AwsShortcuts:
                     "Name": "Name",
                     "InstanceId": "InstanceId",
                     "InstanceType": "InstanceType",
+                    "InstanceState": "InstanceState",
                     "AvailabilityZone": "AvailabilityZone",
                     "PrivateIpAddress": "PrivateIpAddress",
                     "PublicIpAddress": "PublicIpAddress",
