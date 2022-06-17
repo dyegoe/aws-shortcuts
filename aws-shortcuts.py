@@ -127,8 +127,8 @@ class AwsShortcuts:
         response = client.describe_instances(Filters=filters, DryRun=False)
         instances = []
         for reservation in response["Reservations"]:
-            instanceTmp = {"ReservationId": reservation["ReservationId"]}
             for instance in reservation["Instances"]:
+                instanceTmp = {"ReservationId": reservation["ReservationId"]}
                 for tag in instance["Tags"]:
                     if tag["Key"] == "Name":
                         instanceTmp["Name"] = tag["Value"]
@@ -137,7 +137,7 @@ class AwsShortcuts:
                 instanceTmp["AvailabilityZone"] = instance["Placement"][
                     "AvailabilityZone"
                 ]
-                instanceTmp["PrivateIpAddress"] = instance["PrivateIpAddress"]
+                instanceTmp["PrivateIpAddress"] = instance.get("PrivateIpAddress", None)
                 instanceTmp["PublicIpAddress"] = instance.get("PublicIpAddress", None)
             instances.append(instanceTmp)
         print(
