@@ -132,13 +132,13 @@ class AwsShortcuts:
         instances = []
         for reservation in response["Reservations"]:
             for instance in reservation["Instances"]:
-                instanceTmp = {"ReservationId": reservation["ReservationId"]}
+                instanceTmp = {}
                 for tag in instance["Tags"]:
                     if tag["Key"] == "Name":
                         instanceTmp["Name"] = tag["Value"]
                 instanceTmp["InstanceId"] = instance["InstanceId"]
                 instanceTmp["InstanceType"] = instance["InstanceType"]
-                instanceTmp["InstanceType"] = instance["State"]["Name"]
+                instanceTmp["InstanceState"] = instance["State"]["Name"]
                 instanceTmp["AvailabilityZone"] = instance["Placement"][
                     "AvailabilityZone"
                 ]
@@ -150,16 +150,7 @@ class AwsShortcuts:
         print(
             tabulate(
                 instances,
-                headers={
-                    "ReservationId": "ReservationId",
-                    "Name": "Name",
-                    "InstanceId": "InstanceId",
-                    "InstanceType": "InstanceType",
-                    "InstanceState": "InstanceState",
-                    "AvailabilityZone": "AvailabilityZone",
-                    "PrivateIpAddress": "PrivateIpAddress",
-                    "PublicIpAddress": "PublicIpAddress",
-                },
+                headers='keys',
                 tablefmt=self.tablefmt,
             )
         )
@@ -202,14 +193,7 @@ class AwsShortcuts:
         print(
             tabulate(
                 enis,
-                headers={
-                    "PublicIp": "PublicIp",
-                    "NetworkInterfaceId": "NetworkInterfaceId",
-                    "InterfaceType": "InterfaceType",
-                    "InstanceId": "InstanceId",
-                    "AvailabilityZone": "AvailabilityZone",
-                    "Status": "Status",
-                },
+                headers='keys',
                 tablefmt=self.tablefmt,
             )
         )
@@ -255,13 +239,7 @@ class AwsShortcuts:
         print(
             tabulate(
                 elbs,
-                headers={
-                    "LoadBalancerArn": "LoadBalancerArn",
-                    "LoadBalancerName": "LoadBalancerName",
-                    "DNSName": "DNSName",
-                    "Type": "Type",
-                    "Scheme": "Scheme",
-                },
+                headers='keys',
                 tablefmt=self.tablefmt,
             )
         )
