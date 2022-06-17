@@ -38,7 +38,8 @@ class AwsShortcuts:
                            You can search by name, by private IPs or public IPs.""",
         )
         self.ec2_parser.set_defaults(func=self.ec2)
-        ec2_arg_group = self.ec2_parser.add_mutually_exclusive_group(required=True)
+        ec2_arg_group = self.ec2_parser.add_mutually_exclusive_group(
+            required=True)
         ec2_arg_group.add_argument(
             "--names",
             help="Provide a list of comma-separated names. It searchs using the `tag:Name`. e.g. --names instance-1,instance-2",
@@ -59,7 +60,8 @@ class AwsShortcuts:
                            You can search by private IPs or public IPs.""",
         )
         self.eni_parser.set_defaults(func=self.eni)
-        eni_arg_group = self.eni_parser.add_mutually_exclusive_group(required=True)
+        eni_arg_group = self.eni_parser.add_mutually_exclusive_group(
+            required=True)
         eni_arg_group.add_argument(
             "--privateIps",
             help="Provide a list of comma-separated private IPs. e.g. --privateIps 172.16.0.1,172.17.1.254",
@@ -76,7 +78,8 @@ class AwsShortcuts:
                            You can search by ARNs, by names or by DNS names.""",
         )
         self.elb_parser.set_defaults(func=self.elb)
-        elb_arg_group = self.elb_parser.add_mutually_exclusive_group(required=True)
+        elb_arg_group = self.elb_parser.add_mutually_exclusive_group(
+            required=True)
         elb_arg_group.add_argument(
             "--arns",
             help="""Provide a list of comma-separated ARNs.
@@ -117,7 +120,8 @@ class AwsShortcuts:
             ]
         elif self.args.publicIps != None:
             filters = [
-                {"Name": "ip-address", "Values": self.args.publicIps.split(",")},
+                {"Name": "ip-address",
+                    "Values": self.args.publicIps.split(",")},
             ]
         else:
             self.ec2_parser.print_help()
@@ -137,9 +141,11 @@ class AwsShortcuts:
                 instanceTmp["AvailabilityZone"] = instance["Placement"][
                     "AvailabilityZone"
                 ]
-                instanceTmp["PrivateIpAddress"] = instance.get("PrivateIpAddress", None)
-                instanceTmp["PublicIpAddress"] = instance.get("PublicIpAddress", None)
-            instances.append(instanceTmp)
+                instanceTmp["PrivateIpAddress"] = instance.get(
+                    "PrivateIpAddress", None)
+                instanceTmp["PublicIpAddress"] = instance.get(
+                    "PublicIpAddress", None)
+                instances.append(instanceTmp)
         print(
             tabulate(
                 instances,
@@ -176,7 +182,8 @@ class AwsShortcuts:
             sysexit("ENI: Something wrong")
 
         client = self.aws()
-        response = client.describe_network_interfaces(Filters=filters, DryRun=False)
+        response = client.describe_network_interfaces(
+            Filters=filters, DryRun=False)
         enis = []
         for eni in response["NetworkInterfaces"]:
             # pprint(eni)
