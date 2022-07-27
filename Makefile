@@ -32,3 +32,14 @@ stop: ## Stops the container
 rm: ## Removes the container
 	@echo Removing $(CONTAINER_IMAGE)
 	@docker rm -f $(CONTAINER_NAME)
+
+.PHONY : install
+install: ## Installs aws-shortcuts
+	@echo Installing aws-shortcuts
+	@mkdir -p $(HOME)/.local/bin
+	@cp $(CURRENT_DIR)/aws-shortcuts.py $(HOME)/.local/bin/aws-shortcuts
+
+.PHONY : requirements
+requirements: ## Installs pip3 requirements
+	@echo Installing requirements
+	@/usr/bin/env python3 -m pip install -r requirements.txt
