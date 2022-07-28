@@ -330,11 +330,16 @@ def deserialize_ec2_instances(response):
             instances.append(
                 OrderedDict(
                     [
-                        ("InstanceState", instance["State"]["Name"]),
+                        ("InstanceState", instance.get("State", None).get("Name")),
                         ("InstanceName", find_tag_name(instance)),
-                        ("InstanceId", instance["InstanceId"]),
-                        ("InstanceType", instance["InstanceType"]),
-                        ("AvailabilityZone", instance["Placement"]["AvailabilityZone"]),
+                        ("InstanceId", instance.get("InstanceId", None)),
+                        ("InstanceType", instance.get("InstanceType", None)),
+                        (
+                            "AvailabilityZone",
+                            instance.get("Placement", None).get(
+                                "AvailabilityZone", None
+                            ),
+                        ),
                         ("PrivateIpAddress", instance.get("PrivateIpAddress", None)),
                         ("PublicIpAddress", instance.get("PublicIpAddress", None)),
                     ]
@@ -352,13 +357,13 @@ def deserialize_enis(response):
         enis.append(
             OrderedDict(
                 [
-                    ("PrivateIp", eni["PrivateIpAddress"]),
-                    ("PublicIp", eni["Association"]["PublicIp"]),
-                    ("NetworkInterfaceId", eni["NetworkInterfaceId"]),
-                    ("InterfaceType", eni["InterfaceType"]),
+                    ("PrivateIp", eni.get("PrivateIpAddress", None)),
+                    ("PublicIp", eni.get("Association", None).get("PublicIp", None)),
+                    ("NetworkInterfaceId", eni.get("NetworkInterfaceId", None)),
+                    ("InterfaceType", eni.get("InterfaceType", None)),
                     ("InstanceId", eni.get("Attachment", None).get("InstanceId", None)),
-                    ("AvailabilityZone", eni["AvailabilityZone"]),
-                    ("Status", eni["Status"]),
+                    ("AvailabilityZone", eni.get("AvailabilityZone", None)),
+                    ("Status", eni.get("Status", None)),
                 ]
             )
         )
@@ -374,11 +379,11 @@ def deserialize_elbs(response, dns_names=None):
         elbs.append(
             OrderedDict(
                 [
-                    ("LoadBalancerName", elb["LoadBalancerName"]),
-                    ("DNSName", elb["DNSName"]),
-                    ("Type", elb["Type"]),
-                    ("Scheme", elb["Scheme"]),
-                    ("LoadBalancerArn", elb["LoadBalancerArn"]),
+                    ("LoadBalancerName", elb.get("LoadBalancerName", None)),
+                    ("DNSName", elb.get("DNSName", None)),
+                    ("Type", elb.get("Type", None)),
+                    ("Scheme", elb.get("Scheme", None)),
+                    ("LoadBalancerArn", elb.get("LoadBalancerArn", None)),
                 ]
             )
         )
