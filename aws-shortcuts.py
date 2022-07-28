@@ -2,6 +2,7 @@
 
 import argparse
 import boto3
+from botocore import exceptions as botocore_exceptions
 import sys
 import json
 from tabulate import tabulate
@@ -151,10 +152,10 @@ def get_aws_session(profile_name, region_name):
         for profile in profiles:
             yield from get_aws_session(profile, region_name)
     elif region_name == "all":
-        regions = (
-            boto3.Session(profile_name=profile_name, region_name="us-east-1")
-            .client("ec2")
-            .describe_regions(
+        try:
+            session = boto3.Session(profile_name=profile_name, region_name="us-east-1")
+            client = session.client("ec2")
+            regions = client.describe_regions(
                 Filters=[
                     {
                         "Name": "opt-in-status",
@@ -162,7 +163,9 @@ def get_aws_session(profile_name, region_name):
                     }
                 ]
             )["Regions"]
-        )
+        except botocore_exceptions.ProfileNotFound:
+            print("Profile '{}' not found.".format(profile_name))
+            return
         for region in regions:
             yield from get_aws_session(profile_name, region["RegionName"])
     else:
