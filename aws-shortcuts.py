@@ -309,6 +309,17 @@ def deserialize(response):
         return deserialize_elbs(response)
 
 
+def find_tag_name(instance):
+    """
+    Get the name of an instance.
+    """
+    if "Tags" in instance:
+        for tag in instance["Tags"]:
+            if tag["Key"] == "Name":
+                return tag["Value"]
+    return None
+
+
 def deserialize_ec2_instances(response):
     """
     Deserialize the EC2 instances response.
@@ -316,14 +327,11 @@ def deserialize_ec2_instances(response):
     instances = []
     for reservation in response["Reservations"]:
         for instance in reservation["Instances"]:
-            for tag in instance["Tags"]:
-                if tag["Key"] == "Name":
-                    instance_name = tag["Value"]
             instances.append(
                 OrderedDict(
                     [
                         ("InstanceState", instance["State"]["Name"]),
-                        ("InstanceName", instance_name),
+                        ("InstanceName", find_tag_name(instance)),
                         ("InstanceId", instance["InstanceId"]),
                         ("InstanceType", instance["InstanceType"]),
                         ("AvailabilityZone", instance["Placement"]["AvailabilityZone"]),
