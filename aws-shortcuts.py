@@ -420,7 +420,7 @@ def aws_search(profile_name, region_name, output, func, **kwargs):
     """
     for session in get_aws_session(profile_name, region_name):
         table_data = deserialize(func(session, **kwargs))
-        print_data(table_data, profile_name, region_name, output)
+        print_data(table_data, session.profile_name, session.region_name, output)
 
 
 def ec2(args):
