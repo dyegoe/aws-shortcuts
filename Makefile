@@ -7,13 +7,13 @@ CONTAINER_APP_DIR := "/aws-shortcuts"
 AWS_CONFIG_DIR := $(HOME)/.aws
 
 # DOCKER TASKS
-.PHONY : build
-build: ## Build the container
+.PHONY : docker-build
+docker-build: ## Build the container
 	@echo Building $(CONTAINER_IMAGE)
 	@docker build -t $(CONTAINER_IMAGE) .
 
-.PHONY : run
-run: ## Runs the container
+.PHONY : docker-run
+docker-run: ## Runs the container
 	@echo Running $(CONTAINER_IMAGE)
 	@docker run --rm \
 		-v $(AWS_CONFIG_DIR):/root/.aws:ro \
@@ -23,23 +23,30 @@ run: ## Runs the container
 		--name $(CONTAINER_NAME) \
 		-it $(CONTAINER_IMAGE) sh
 
-.PHONY : stop
-stop: ## Stops the container
+.PHONY : docker-stop
+docker-stop: ## Stops the container
 	@echo Stopping $(CONTAINER_IMAGE)
 	@docker stop $(CONTAINER_NAME)
 
-.PHONY : rm
-rm: ## Removes the container
+.PHONY : docker-rm
+docker-rm: ## Removes the container
 	@echo Removing $(CONTAINER_IMAGE)
 	@docker rm -f $(CONTAINER_NAME)
+
+.PHONY : docker-rmi
+docker-rmi: ## Removes the image
+	@echo Removing $(CONTAINER_IMAGE)
+	@docker rmi $(CONTAINER_IMAGE)
+
+# SCRIPT TASKS
+.PHONY : build
+build: ## Installs pip3 requirements
+	@echo Installing requirements
+	@/usr/bin/env python3 -m pip install -r requirements.txt
 
 .PHONY : install
 install: ## Installs aws-shortcuts
 	@echo Installing aws-shortcuts
 	@mkdir -p $(HOME)/.local/bin
 	@cp $(CURRENT_DIR)/aws-shortcuts.py $(HOME)/.local/bin/aws-shortcuts
-
-.PHONY : requirements
-requirements: ## Installs pip3 requirements
-	@echo Installing requirements
-	@/usr/bin/env python3 -m pip install -r requirements.txt
+	@chmod +x $(HOME)/.local/bin/aws-shortcuts
