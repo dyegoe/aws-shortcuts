@@ -2,6 +2,7 @@
 
 import argparse
 import boto3
+from botocore import exceptions as botocore_exceptions
 import sys
 import json
 from tabulate import tabulate
@@ -151,10 +152,10 @@ def get_aws_session(profile_name, region_name):
         for profile in profiles:
             yield from get_aws_session(profile, region_name)
     elif region_name == "all":
-        regions = (
-            boto3.Session(profile_name=profile_name, region_name="us-east-1")
-            .client("ec2")
-            .describe_regions(
+        try:
+            session = boto3.Session(profile_name=profile_name, region_name="us-east-1")
+            client = session.client("ec2")
+            regions = client.describe_regions(
                 Filters=[
                     {
                         "Name": "opt-in-status",
@@ -162,7 +163,9 @@ def get_aws_session(profile_name, region_name):
                     }
                 ]
             )["Regions"]
-        )
+        except botocore_exceptions.ProfileNotFound:
+            print("Profile '{}' not found.".format(profile_name))
+            return
         for region in regions:
             yield from get_aws_session(profile_name, region["RegionName"])
     else:
@@ -309,6 +312,17 @@ def deserialize(response):
         return deserialize_elbs(response)
 
 
+def find_tag_name(instance):
+    """
+    Get the name of an instance.
+    """
+    if "Tags" in instance:
+        for tag in instance["Tags"]:
+            if tag["Key"] == "Name":
+                return tag["Value"]
+    return None
+
+
 def deserialize_ec2_instances(response):
     """
     Deserialize the EC2 instances response.
@@ -316,17 +330,19 @@ def deserialize_ec2_instances(response):
     instances = []
     for reservation in response["Reservations"]:
         for instance in reservation["Instances"]:
-            for tag in instance["Tags"]:
-                if tag["Key"] == "Name":
-                    instance_name = tag["Value"]
             instances.append(
                 OrderedDict(
                     [
-                        ("InstanceState", instance["State"]["Name"]),
-                        ("InstanceName", instance_name),
-                        ("InstanceId", instance["InstanceId"]),
-                        ("InstanceType", instance["InstanceType"]),
-                        ("AvailabilityZone", instance["Placement"]["AvailabilityZone"]),
+                        ("InstanceState", instance.get("State", None).get("Name")),
+                        ("InstanceName", find_tag_name(instance)),
+                        ("InstanceId", instance.get("InstanceId", None)),
+                        ("InstanceType", instance.get("InstanceType", None)),
+                        (
+                            "AvailabilityZone",
+                            instance.get("Placement", None).get(
+                                "AvailabilityZone", None
+                            ),
+                        ),
                         ("PrivateIpAddress", instance.get("PrivateIpAddress", None)),
                         ("PublicIpAddress", instance.get("PublicIpAddress", None)),
                     ]
@@ -344,13 +360,13 @@ def deserialize_enis(response):
         enis.append(
             OrderedDict(
                 [
-                    ("PrivateIp", eni["PrivateIpAddress"]),
-                    ("PublicIp", eni["Association"]["PublicIp"]),
-                    ("NetworkInterfaceId", eni["NetworkInterfaceId"]),
-                    ("InterfaceType", eni["InterfaceType"]),
+                    ("PrivateIp", eni.get("PrivateIpAddress", None)),
+                    ("PublicIp", eni.get("Association", None).get("PublicIp", None)),
+                    ("NetworkInterfaceId", eni.get("NetworkInterfaceId", None)),
+                    ("InterfaceType", eni.get("InterfaceType", None)),
                     ("InstanceId", eni.get("Attachment", None).get("InstanceId", None)),
-                    ("AvailabilityZone", eni["AvailabilityZone"]),
-                    ("Status", eni["Status"]),
+                    ("AvailabilityZone", eni.get("AvailabilityZone", None)),
+                    ("Status", eni.get("Status", None)),
                 ]
             )
         )
@@ -366,11 +382,11 @@ def deserialize_elbs(response, dns_names=None):
         elbs.append(
             OrderedDict(
                 [
-                    ("LoadBalancerName", elb["LoadBalancerName"]),
-                    ("DNSName", elb["DNSName"]),
-                    ("Type", elb["Type"]),
-                    ("Scheme", elb["Scheme"]),
-                    ("LoadBalancerArn", elb["LoadBalancerArn"]),
+                    ("LoadBalancerName", elb.get("LoadBalancerName", None)),
+                    ("DNSName", elb.get("DNSName", None)),
+                    ("Type", elb.get("Type", None)),
+                    ("Scheme", elb.get("Scheme", None)),
+                    ("LoadBalancerArn", elb.get("LoadBalancerArn", None)),
                 ]
             )
         )
@@ -407,7 +423,7 @@ def aws_search(profile_name, region_name, output, func, **kwargs):
     """
     for session in get_aws_session(profile_name, region_name):
         table_data = deserialize(func(session, **kwargs))
-        print_data(table_data, profile_name, region_name, output)
+        print_data(table_data, session.profile_name, session.region_name, output)
 
 
 def ec2(args):
