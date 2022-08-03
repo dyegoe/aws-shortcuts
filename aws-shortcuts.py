@@ -2,7 +2,6 @@
 
 import argparse
 import boto3
-from botocore import exceptions as botocore_exceptions
 import sys
 import json
 from tabulate import tabulate
@@ -163,17 +162,16 @@ def get_aws_session(profile_name, region_name):
                     }
                 ]
             )["Regions"]
-        except botocore_exceptions.ProfileNotFound:
-            print("Profile '{}' not found.".format(profile_name))
-            return
-        for region in regions:
-            yield from get_aws_session(profile_name, region["RegionName"])
+            for region in regions:
+                yield from get_aws_session(profile_name, region["RegionName"])
+        except Exception:
+            yield None
     else:
         try:
             session = boto3.Session(profile_name=profile_name, region_name=region_name)
             yield session
-        except Exception as e:
-            print("Error: {}".format(e))
+        except Exception:
+            yield None
 
 
 def get_ec2_instances_by_ids(session, instance_ids):
@@ -183,9 +181,14 @@ def get_ec2_instances_by_ids(session, instance_ids):
     client = session.client("ec2")
     try:
         response = client.describe_instances(InstanceIds=instance_ids)
-    except client.exceptions.ClientError as error:
-        response = {"Reservations": []}
-    return response
+        return response
+    except client.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
+            return {"Reservations": []}
+        else:
+            return None
+    except Exception as e:
+        return None
 
 
 def get_ec2_instances_by_tags(session, tag_key, tag_values):
@@ -197,9 +200,9 @@ def get_ec2_instances_by_tags(session, tag_key, tag_values):
         response = client.describe_instances(
             Filters=[{"Name": "tag:{}".format(tag_key), "Values": tag_values}]
         )
-    except client.exceptions.ClientError as error:
-        response = {"Reservations": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_ec2_instances_by_private_ips(session, private_ips):
@@ -211,9 +214,9 @@ def get_ec2_instances_by_private_ips(session, private_ips):
         response = client.describe_instances(
             Filters=[{"Name": "private-ip-address", "Values": private_ips}]
         )
-    except client.exceptions.ClientError as error:
-        response = {"Reservations": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_ec2_instances_by_public_ips(session, public_ips):
@@ -225,9 +228,9 @@ def get_ec2_instances_by_public_ips(session, public_ips):
         response = client.describe_instances(
             Filters=[{"Name": "ip-address", "Values": public_ips}]
         )
-    except client.exceptions.ClientError as error:
-        response = {"Reservations": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_enis_by_private_ips(session, private_ips):
@@ -239,9 +242,9 @@ def get_enis_by_private_ips(session, private_ips):
         response = client.describe_network_interfaces(
             Filters=[{"Name": "addresses.private-ip-address", "Values": private_ips}]
         )
-    except client.exceptions.ClientError as error:
-        response = {"NetworkInterfaces": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_enis_by_public_ips(session, public_ips):
@@ -253,9 +256,9 @@ def get_enis_by_public_ips(session, public_ips):
         response = client.describe_network_interfaces(
             Filters=[{"Name": "addresses.association.public-ip", "Values": public_ips}]
         )
-    except client.exceptions.ClientError as error:
-        response = {"NetworkInterfaces": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_elbs_by_arns(session, arns):
@@ -266,9 +269,9 @@ def get_elbs_by_arns(session, arns):
     try:
         response = client.describe_load_balancers(LoadBalancerArns=arns)
         print(response)
-    except client.exceptions.ClientError as error:
-        response = {"LoadBalancers": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_elbs_by_names(session, names):
@@ -278,9 +281,9 @@ def get_elbs_by_names(session, names):
     client = session.client("elbv2")
     try:
         response = client.describe_load_balancers(Names=names)
-    except client.exceptions.ClientError as error:
-        response = {"LoadBalancers": []}
-    return response
+        return response
+    except Exception:
+        return None
 
 
 def get_elbs_by_dns_names(session, dns_names):
@@ -289,15 +292,14 @@ def get_elbs_by_dns_names(session, dns_names):
     """
     client = session.client("elbv2")
     try:
-        response_tmp = client.describe_load_balancers()
-    except client.exceptions.ClientError as error:
-        response_tmp = {"LoadBalancers": []}
-
-    response = {"LoadBalancers": []}
-    for elb in response_tmp["LoadBalancers"]:
-        if elb["DNSName"] in dns_names:
-            response["LoadBalancers"].append(elb)
-    return response
+        elbs = client.describe_load_balancers()
+        response = {"LoadBalancers": []}
+        for elb in elbs["LoadBalancers"]:
+            if elb["DNSName"] in dns_names:
+                response["LoadBalancers"].append(elb)
+        return response
+    except Exception:
+        return None
 
 
 def deserialize(response):
@@ -422,8 +424,15 @@ def aws_search(profile_name, region_name, output, func, **kwargs):
     Iterate over all AWS sessions and call the function with the provided arguments.
     """
     for session in get_aws_session(profile_name, region_name):
-        table_data = deserialize(func(session, **kwargs))
-        print_data(table_data, session.profile_name, session.region_name, output)
+        if session is not None:
+            response = func(session, **kwargs)
+            if response is not None:
+                table_data = deserialize(response)
+                print_data(
+                    table_data, session.profile_name, session.region_name, output
+                )
+        else:
+            continue
 
 
 def ec2(args):
@@ -468,7 +477,7 @@ def ec2(args):
             public_ips=publicIps,
         )
     else:
-        sys.exit("EC2: Something wrong")
+        sys.exit("EC2: You didn't provide the right parameter")
 
 
 def eni(args):
@@ -494,7 +503,7 @@ def eni(args):
             public_ips=publicIps,
         )
     else:
-        sys.exit("ENI: Something wrong")
+        sys.exit("ENI: You didn't provide the right parameter")
 
 
 def elb(args):
@@ -529,7 +538,7 @@ def elb(args):
             dns_names=dnsNames,
         )
     else:
-        sys.exit("ELB: Something wrong")
+        sys.exit("ELB: You didn't provide the right parameter")
 
 
 parser = main_parser()
