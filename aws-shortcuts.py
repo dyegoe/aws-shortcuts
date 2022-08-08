@@ -71,6 +71,11 @@ def ec2_subparser(subparsers):
         help="Provide a list of comma-separated names. It searchs using the `tag:Name`. e.g. --names instance-1,instance-2",
     )
     ec2_arg_group.add_argument(
+        "-t",
+        "--tags",
+        help="Provide a tag key and a list of comma-separated tag values. e.g. --tags env=dev,stag,prod",
+    )
+    ec2_arg_group.add_argument(
         "-p",
         "--privateIps",
         help="Provide a list of comma-separated private IPs. e.g. --privateIps 172.16.0.1,172.17.1.254",
@@ -457,6 +462,17 @@ def ec2(args):
             get_ec2_instances_by_tags,
             tag_key="Name",
             tag_values=names,
+        )
+    elif args.tags:
+        """env=123,123"""
+        key, value = args.tags.split("=")
+        aws_search(
+            args.profile,
+            args.region,
+            args.output,
+            get_ec2_instances_by_tags,
+            tag_key=key,
+            tag_values=value.split(","),
         )
     elif args.privateIps:
         privateIps = args.privateIps.split(",")
