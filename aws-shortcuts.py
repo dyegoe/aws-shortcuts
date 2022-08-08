@@ -148,8 +148,14 @@ def elb_subparser(subparsers):
 
 
 def get_aws_session(profile_name, region_name):
-    """
-    Get an AWS session using the profile and region names.
+    """Get an AWS session using the profile and region names.
+
+    Args:
+        profile_name (string): AWS profile name. You can use 'all' to search across all profiles.
+        region_name (string): AWS region name. You can use 'all' to search across all regions.
+
+    Yields:
+        botocore_session: It will retrieve a session for each profile and region.
     """
     if profile_name == "all":
         profiles = boto3.Session().available_profiles
@@ -180,8 +186,14 @@ def get_aws_session(profile_name, region_name):
 
 
 def get_ec2_instances_by_ids(session, instance_ids):
-    """
-    Get all EC2 instances with a specific instance ID.
+    """Get all EC2 instances with a specific instance ID.
+
+    Args:
+        session (botocore_session): AWS session.
+        instance_ids (list): List of instance IDs.
+
+    Returns:
+        list: List of EC2 instances.
     """
     client = session.client("ec2")
     try:
@@ -197,8 +209,15 @@ def get_ec2_instances_by_ids(session, instance_ids):
 
 
 def get_ec2_instances_by_tags(session, tag_key, tag_values):
-    """
-    Get all EC2 instances with a specific tag.
+    """Get all EC2 instances with a specific tag.
+
+    Args:
+        session (botocore_session): AWS session.
+        tag_key (string): Tag key.
+        tag_values (list): List of tag values.
+
+    Returns:
+        list: List of EC2 instances.
     """
     client = session.client("ec2")
     try:
@@ -211,8 +230,14 @@ def get_ec2_instances_by_tags(session, tag_key, tag_values):
 
 
 def get_ec2_instances_by_private_ips(session, private_ips):
-    """
-    Get all EC2 instances with a specific private IP.
+    """Get all EC2 instances with a specific private IP.
+
+    Args:
+        session (botocore_session): AWS session.
+        private_ips (list): List of private IPs.
+
+    Returns:
+        list: List of EC2 instances.
     """
     client = session.client("ec2")
     try:
@@ -225,8 +250,14 @@ def get_ec2_instances_by_private_ips(session, private_ips):
 
 
 def get_ec2_instances_by_public_ips(session, public_ips):
-    """
-    Get all EC2 instances with a specific public IP.
+    """Get all EC2 instances with a specific public IP.
+
+    Args:
+        session (botocore_session): AWS session.
+        public_ips (list): List of public IPs.
+
+    Returns:
+        list: List of EC2 instances.
     """
     client = session.client("ec2")
     try:
@@ -239,8 +270,14 @@ def get_ec2_instances_by_public_ips(session, public_ips):
 
 
 def get_enis_by_private_ips(session, private_ips):
-    """
-    Get all ENIs with a specific private IP.
+    """Get all ENIs with a specific private IP.
+
+    Args:
+        session (botocore_session): AWS session.
+        private_ips (list): List of private IPs.
+
+    Returns:
+        list: List of ENIs.
     """
     client = session.client("ec2")
     try:
@@ -253,8 +290,14 @@ def get_enis_by_private_ips(session, private_ips):
 
 
 def get_enis_by_public_ips(session, public_ips):
-    """
-    Get all ENIs with a specific public IP.
+    """Get all ENIs with a specific public IP.
+
+    Args:
+        session (botocore_session): AWS session.
+        public_ips (list): List of public IPs.
+
+    Returns:
+        list: List of ENIs.
     """
     client = session.client("ec2")
     try:
@@ -267,8 +310,14 @@ def get_enis_by_public_ips(session, public_ips):
 
 
 def get_elbs_by_arns(session, arns):
-    """
-    Get all ELBs with a specific ARN.
+    """Get all ELBs with a specific ARN.
+
+    Args:
+        session (botocore_session): AWS session.
+        arns (list): List of ARNs.
+
+    Returns:
+        list: List of ELBs.
     """
     client = session.client("elbv2")
     try:
@@ -280,8 +329,14 @@ def get_elbs_by_arns(session, arns):
 
 
 def get_elbs_by_names(session, names):
-    """
-    Get all ELBs with a specific name.
+    """Get all ELBs with a specific name.
+
+    Args:
+        session (botocore_session): AWS session.
+        names (list): List of names.
+
+    Returns:
+        list: List of ELBs.
     """
     client = session.client("elbv2")
     try:
@@ -292,8 +347,14 @@ def get_elbs_by_names(session, names):
 
 
 def get_elbs_by_dns_names(session, dns_names):
-    """
-    Get all ELBs with a specific DNS name.
+    """Get all ELBs with a specific DNS name.
+
+    Args:
+        session (botocore_session): AWS session.
+        dns_names (list): List of DNS names.
+
+    Returns:
+        list: List of ELBs.
     """
     client = session.client("elbv2")
     try:
@@ -308,8 +369,13 @@ def get_elbs_by_dns_names(session, dns_names):
 
 
 def deserialize(response):
-    """
-    Deserialize the response.
+    """Deserialize the response.
+
+    Args:
+        response (dict): dict of AWS resources.
+
+    Returns:
+        dict: dict of AWS resources.
     """
     if "Reservations" in response:
         return deserialize_ec2_instances(response)
@@ -320,8 +386,13 @@ def deserialize(response):
 
 
 def find_tag_name(instance):
-    """
-    Get the name of an instance.
+    """Get the name of an instance.
+
+    Args:
+        instance (dict): dict of an instance.
+
+    Returns:
+        string: name of the instance.
     """
     if "Tags" in instance:
         for tag in instance["Tags"]:
@@ -331,8 +402,13 @@ def find_tag_name(instance):
 
 
 def deserialize_ec2_instances(response):
-    """
-    Deserialize the EC2 instances response.
+    """Deserialize the EC2 instances response.
+
+    Args:
+        response (dict): dict of EC2 instances.
+
+    Returns:
+        dict: dict of EC2 instances.
     """
     instances = []
     for reservation in response["Reservations"]:
@@ -359,8 +435,13 @@ def deserialize_ec2_instances(response):
 
 
 def deserialize_enis(response):
-    """
-    Deserialize the ENIs response.
+    """Deserialize the ENIs response.
+
+    Args:
+        response (dict): dict of ENIs.
+
+    Returns:
+        dict: dict of ENIs.
     """
     enis = []
     for eni in response["NetworkInterfaces"]:
@@ -381,8 +462,14 @@ def deserialize_enis(response):
 
 
 def deserialize_elbs(response, dns_names=None):
-    """
-    Deserialize the ELBs response.
+    """Deserialize the ELBs response.
+
+    Args:
+        response (dict): dict of ELBs.
+        dns_names (list, optional): list of DNS names. Defaults to None.
+
+    Returns:
+        dict: dict of ELBs.
     """
     elbs = []
     for elb in response["LoadBalancers"]:
@@ -401,8 +488,13 @@ def deserialize_elbs(response, dns_names=None):
 
 
 def print_data(table_data, profile_name, region_name, output):
-    """
-    Print the data in a table.
+    """Print the data in a table.
+
+    Args:
+        table_data (dict): dict of AWS resources.
+        profile_name (string): AWS profile name.
+        region_name (string): AWS region name.
+        output (string): output format. You can choose between table, json.
     """
     if output == "table":
         print(
@@ -425,8 +517,13 @@ def print_data(table_data, profile_name, region_name, output):
 
 
 def aws_search(profile_name, region_name, output, func, **kwargs):
-    """
-    Iterate over all AWS sessions and call the function with the provided arguments.
+    """Iterate over all AWS sessions and call the function with the provided arguments.
+
+    Args:
+        profile_name (string): AWS profile name.
+        region_name (string): AWS region name.
+        output (string): output format. You can choose between table, json.
+        func (function): function to call.
     """
     for session in get_aws_session(profile_name, region_name):
         if session is not None:
@@ -441,8 +538,10 @@ def aws_search(profile_name, region_name, output, func, **kwargs):
 
 
 def ec2(args):
-    """
-    Search for EC2 instances.
+    """Search for EC2 instances.
+
+    Args:
+        args (argparse.Namespace): argparse arguments.
     """
     if args.ids:
         ids = args.ids.split(",")
@@ -464,7 +563,6 @@ def ec2(args):
             tag_values=names,
         )
     elif args.tags:
-        """env=123,123"""
         key, value = args.tags.split("=")
         aws_search(
             args.profile,
@@ -497,8 +595,10 @@ def ec2(args):
 
 
 def eni(args):
-    """
-    Search for ENIs.
+    """Search for ENIs.
+
+    Args:
+        args (argparse.Namespace): argparse arguments.
     """
     if args.privateIps:
         privateIps = args.privateIps.split(",")
@@ -523,8 +623,10 @@ def eni(args):
 
 
 def elb(args):
-    """
-    Search for ELBs.
+    """Search for ELBs.
+
+    Args:
+        args (argparse.Namespace): argparse arguments.
     """
     if args.arns:
         arns = args.arns.split(",")
